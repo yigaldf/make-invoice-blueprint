@@ -1,0 +1,241 @@
+{
+    "name": "חיפוש חשבוניות מהשבוע האחרון",
+    "flow": [
+        {
+            "id": 1,
+            "module": "google-email:executeEmailSearchQuery",
+            "version": 4,
+            "parameters": {
+                "__IMTCONN__": 13383477
+            },
+            "mapper": {
+                "q": "newer_than:7d has:attachment -label:invoices-saved {חשבונית קבלה invoice receipt}",
+                "limit": 50,
+                "format": "full",
+                "filterType": "gmailSearch",
+                "includeHtmlBody": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 150
+                }
+            }
+        },
+        {
+            "id": 2,
+            "module": "ai-tools:Extract",
+            "version": 2,
+            "parameters": {
+                "model": "global.anthropic.claude-haiku-5-5",
+                "makeConnectionId": 13329601
+            },
+            "mapper": {
+                "input": "Subject: {{1.subject}}\nFrom: {{1.fromName}} <{{1.fromEmail}}>\n\n{{substring(1.fullTextBody; 0; 4000)}}",
+                "fields": [
+                    {
+                        "name": "is_invoice",
+                        "type": "boolean",
+                        "description": "true if this email delivers an invoice, tax invoice, receipt or bill (חשבונית, קבלה) for a payment; false for newsletters, quotes, contracts, marketing or anything else"
+                    },
+                    {
+                        "name": "vendor",
+                        "type": "string",
+                        "description": "Name of the business that issued the invoice/receipt"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "number",
+                        "description": "Total amount paid or due, as a number without currency symbol. Empty if not stated in the text"
+                    },
+                    {
+                        "name": "currency",
+                        "type": "string",
+                        "description": "Currency code such as ILS, USD, EUR. Empty if unknown"
+                    },
+                    {
+                        "name": "invoice_number",
+                        "type": "string",
+                        "description": "Invoice or receipt number. Empty if not stated"
+                    },
+                    {
+                        "name": "invoice_date",
+                        "type": "string",
+                        "description": "Invoice date in YYYY-MM-DD. Empty if not stated"
+                    }
+                ]
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 150
+                }
+            },
+            "onerror": [
+                {
+                    "id": 7,
+                    "module": "builtin:Ignore",
+                    "version": 1,
+                    "metadata": {
+                        "designer": {
+                            "x": 600,
+                            "y": 300
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "module": "google-email:listEmailAttachments",
+            "version": 4,
+            "parameters": {
+                "__IMTCONN__": 13383477
+            },
+            "filter": {
+                "name": "AI אישר שזו חשבונית",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{2.information.is_invoice}}",
+                            "b": "true",
+                            "o": "boolean:equal"
+                        }
+                    ]
+                ]
+            },
+            "mapper": {
+                "include": "attachment",
+                "messageId": "{{1.id}}",
+                "returnAttachmentData": true
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 0
+                }
+            }
+        },
+        {
+            "id": 4,
+            "module": "google-drive:uploadAFile",
+            "version": 4,
+            "parameters": {
+                "__IMTCONN__": 13383489
+            },
+            "filter": {
+                "name": "רק PDF או תמונה",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{3.mimeType}}",
+                            "b": "pdf",
+                            "o": "text:contain:ci"
+                        }
+                    ],
+                    [
+                        {
+                            "a": "{{3.mimeType}}",
+                            "b": "image",
+                            "o": "text:contain:ci"
+                        }
+                    ],
+                    [
+                        {
+                            "a": "{{3.filename}}",
+                            "b": ".pdf",
+                            "o": "text:contain:ci"
+                        }
+                    ]
+                ]
+            },
+            "mapper": {
+                "data": "{{3.data}}",
+                "select": "map",
+                "filename": "{{3.filename}}",
+                "folderId": "17uydAqrvJARCHSt89NzL14OlrHG02tM_"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 0
+                }
+            }
+        },
+        {
+            "id": 5,
+            "module": "google-sheets:addRow",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": 13383671
+            },
+            "mapper": {
+                "mode": "fromAll",
+                "values": {
+                    "0": "{{1.id}}",
+                    "1": "{{formatDate(1.internalDate; \"YYYY-MM-DD\")}}",
+                    "2": "{{1.fromName}} <{{1.fromEmail}}>",
+                    "3": "{{1.subject}}",
+                    "4": "{{2.information.vendor}}",
+                    "5": "{{2.information.invoice_date}}",
+                    "6": "{{2.information.invoice_number}}",
+                    "7": "{{2.information.amount}}",
+                    "8": "{{2.information.currency}}",
+                    "9": "{{4.webViewLink}}"
+                },
+                "sheetId": "Invoices",
+                "spreadsheetId": "1G9SFZMnTwP3LhV8QSrCEwBlIocMfxZOoMOh2HBDTalA",
+                "includesHeaders": true,
+                "insertDataOption": "INSERT_ROWS",
+                "useColumnHeaders": false,
+                "valueInputOption": "USER_ENTERED",
+                "insertUnformatted": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 1200,
+                    "y": 0
+                }
+            }
+        },
+        {
+            "id": 6,
+            "module": "google-email:updateEmailLabels",
+            "version": 4,
+            "parameters": {
+                "__IMTCONN__": 13383477
+            },
+            "mapper": {
+                "addLabels": "Label_55",
+                "messageId": "{{1.id}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 1500,
+                    "y": 0
+                }
+            }
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "eu1.make.com",
+        "notes": []
+    }
+}

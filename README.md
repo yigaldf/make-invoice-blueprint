@@ -15,7 +15,22 @@
 
 ההפעלה ידנית (Run once).
 
+---
+
+# Neon Peach – סיכום בוקר (משימת בונוס)
+
+אוטומציה לדאשבורד [Neon Peach](https://github.com/yigaldf/aido-customer-services) שהנתונים שלו נשמרים ב-Airtable. כל יום ב-08:00 היא סופרת את הפניות ושולחת מייל סיכום קצר.
+
+הקובץ: [`neon-peach-morning-summary.blueprint.json`](neon-peach-morning-summary.blueprint.json)
+
+1. **Airtable**: פניות פתוחות (סטטוס "חדש" או "בטיפול").
+2. **Airtable**: תלונות בעדיפות "גבוהה" שעדיין פתוחות, עם שם הלקוח.
+3. **Airtable**: הזמנות מקום להיום (שעון ישראל), עם השמות ומספר הסועדים.
+4. **Gmail**: מייל HTML בעברית עם שלושת המספרים, השמות וקישור לדאשבורד.
+
+את הכתובת `your-email@example.com` מחליפים בכתובת שלכם אחרי הייבוא.
+
 ## ייבוא
 
 ב-Make: יוצרים סצנריו חדש ← תפריט ⋯ ← **Import Blueprint** ← בוחרים את קובץ ה-JSON.
-אחרי הייבוא צריך לבחור חיבורים משלכם ל-Gmail, Google Drive, Google Sheets ו-Make AI, ולעדכן את תיקיית ה-Drive, הגיליון והתווית לאלה שבחשבון שלכם.
+אחרי הייבוא צריך לבחור חיבורים משלכם ל-Gmail, Google Drive, Google Sheets, Make AI ו-Airtable, ולעדכן את תיקיית ה-Drive, הגיליון, התווית וה-base של Airtable לאלה שבחשבון שלכם.

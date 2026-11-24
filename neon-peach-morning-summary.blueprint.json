@@ -1,0 +1,142 @@
+{
+    "name": "Neon Peach – סיכום בוקר",
+    "flow": [
+        {
+            "id": 1,
+            "module": "airtable:makeApiCall",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 13385262
+            },
+            "mapper": {
+                "url": "v0/app2oUe715DC4w0E1/Tickets",
+                "method": "GET",
+                "qs": [
+                    {
+                        "key": "filterByFormula",
+                        "value": "OR({Status}='חדש',{Status}='בטיפול')"
+                    },
+                    {
+                        "key": "pageSize",
+                        "value": "100"
+                    },
+                    {
+                        "key": "fields[]",
+                        "value": "Status"
+                    }
+                ]
+            },
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0
+                }
+            }
+        },
+        {
+            "id": 2,
+            "module": "airtable:makeApiCall",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 13385262
+            },
+            "mapper": {
+                "url": "v0/app2oUe715DC4w0E1/Tickets",
+                "method": "GET",
+                "qs": [
+                    {
+                        "key": "filterByFormula",
+                        "value": "AND({Category}='תלונה',{Priority}='גבוהה',OR({Status}='חדש',{Status}='בטיפול'))"
+                    },
+                    {
+                        "key": "pageSize",
+                        "value": "100"
+                    },
+                    {
+                        "key": "fields[]",
+                        "value": "CustomerName"
+                    }
+                ]
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 0
+                }
+            }
+        },
+        {
+            "id": 3,
+            "module": "airtable:makeApiCall",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 13385262
+            },
+            "mapper": {
+                "url": "v0/app2oUe715DC4w0E1/Tickets",
+                "method": "GET",
+                "qs": [
+                    {
+                        "key": "filterByFormula",
+                        "value": "AND({Category}='הזמנת מקום',DATETIME_FORMAT({ReservationDate},'YYYY-MM-DD')='{{formatDate(now; \"YYYY-MM-DD\"; \"Asia/Jerusalem\")}}')"
+                    },
+                    {
+                        "key": "pageSize",
+                        "value": "100"
+                    },
+                    {
+                        "key": "sort[0][field]",
+                        "value": "ReservationTime"
+                    }
+                ]
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 0
+                }
+            }
+        },
+        {
+            "id": 4,
+            "module": "google-email:sendAnEmail",
+            "version": 4,
+            "parameters": {
+                "__IMTCONN__": 13383477
+            },
+            "mapper": {
+                "to": [
+                    "your-email@example.com"
+                ],
+                "subject": "🍑 Neon Peach – סיכום בוקר {{formatDate(now; \"DD/MM\"; \"Asia/Jerusalem\")}}",
+                "bodyType": "rawHtml",
+                "content": "<div dir=\"rtl\" style=\"font-family:Arial,sans-serif;font-size:15px;line-height:1.6\"><h2 style=\"margin:0 0 12px\">🍑 סיכום בוקר – {{formatDate(now; \"DD/MM/YYYY\"; \"Asia/Jerusalem\")}}</h2><p>📬 <b>פניות פתוחות:</b> {{length(1.body.records)}}</p><p>🚨 <b>תלונות דחופות:</b> {{length(2.body.records)}}{{if(length(2.body.records) > 0; \" — \" + join(map(2.body.records; \"fields.CustomerName\"); \", \"); \"\")}}</p><p>📅 <b>הזמנות להערב:</b> {{length(3.body.records)}} ({{ifempty(sum(map(3.body.records; \"fields.Guests\")); 0)}} סועדים){{if(length(3.body.records) > 0; \" — \" + join(map(3.body.records; \"fields.CustomerName\"); \", \"); \"\")}}</p><p><a href=\"https://yigaldf.github.io/aido-customer-services/\">לפתיחת הדאשבורד</a></p></div>"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 0
+                }
+            }
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "eu1.make.com"
+    }
+}
